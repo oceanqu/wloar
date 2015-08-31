@@ -1,0 +1,54 @@
+# Routes
+# This file defines all application routes (Higher priority routes first)
+# ~~~~
+
+# Home page
+GET     /                                       Application.index
+
+# Ignore favicon requests
+GET     /favicon.ico                            404
+
+# Map static resources from the /app/public folder to the /public path
+GET     /public/                                staticDir:public
+
+# Catch all
+*       /{controller}/{action}                  {controller}.{action}
+POST     /api/upload/file_upload			  upload.FileUpload.imageThumbnail      
+GET     /api/upload/get_file_list			  upload.FileUpload.getFileList      
+POST     /api/upload/delete_file_info			  upload.FileUpload.deleteFileInfo      
+
+GET     /api/user/get_user_list			  user.UserInfo.getUserList      
+POST     /api/user/update_user_registration			   user.UserInfo.updateUserRegistrationId      
+POST     /api/user/login			   user.UserInfo.login      
+POST     /api/user/update_user_password			   user.UserInfo.updateUserPassword      
+
+POST     /api/task/add_task_info			  task.TaskInfo.addTaskInfo      
+GET     /api/task/get_task_list			  task.TaskInfo.getUserTaskList      
+GET     /api/task/get_task_info			  task.TaskInfo.getUserTaskInfo        
+POST     /api/task/edit_task_info			  task.TaskInfo.editUserTaskInfo        
+POST     /api/task/delete_task_info			  task.TaskInfo.deleteUserTaskInfo        
+POST     /api/task/verify_task_info			  task.TaskInfo.verifyUserTaskInfo        
+
+POST     /api/company/add_company_info			  company.CompanyInfo.addCompanyInfo      
+GET     /api/company/get_company_list			  company.CompanyInfo.getCompanyList      
+GET     /api/company/get_company_info			  company.CompanyInfo.getCompanyInfo        
+POST     /api/company/edit_company_info			  company.CompanyInfo.editCompanyInfo        
+POST     /api/company/delete_company_info			  company.CompanyInfo.deleteCompanyInfo        
+
+POST     /api/notice/add_notice_info			  notice.CustomDocinfo.addNoticeInfo      
+GET     /api/notice/get_notice_list			  notice.CustomDocinfo.getNoticeList      
+GET     /api/notice/get_notice_info			  notice.CustomDocinfo.getNoticeInfo      
+POST     /api/notice/edit_notice_info			  notice.CustomDocinfo.editNoticeInfo          
+POST     /api/notice/delete_notice_info			  notice.CustomDocinfo.deleteNoticeInfo          
+
+GET     /api/version/get_version_info			  version.VersionInfo.getVersion      
+
+
+#POST     /api/verify/add_apply_info			  verify.ApplyVerifyInfo.addApplyInfo      
+#POST     /api/verify/verify_apply_info			  verify.ApplyVerifyInfo.verifyApplyInfo      
+#GET     /api/verify/get_apply_list			  verify.ApplyVerifyInfo.getApplyList      
+#GET     /api/verify/get_apply_info			  verify.ApplyVerifyInfo.getApplyInfo      
+
+#GET     /api/user/get_user_list			  user.UserInfo.getUserList      
+#POST     /api/user/update_user_registration			   user.UserInfo.updateUserRegistrationId      
+#POST     /api/user/login			   user.UserInfo.login      
