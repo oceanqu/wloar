@@ -4,7 +4,9 @@ import static javax.persistence.GenerationType.AUTO;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -36,6 +38,7 @@ public class AndroidFileInfo extends GenericModel{
 	public Integer user_id = 0;//
 	public String user_name;// 
 	public String content;//图片说明
+	public String thumb_url ;//缩略图路径
 
 	public static AndroidFileInfo findByOriginalFileName(String original_file_name, Integer file_type) {
 	    List<AndroidFileInfo> androidFileInfoList = AndroidFileInfo.find("original_file_name = ? and file_type = ?", original_file_name, file_type).fetch();
@@ -54,7 +57,12 @@ public class AndroidFileInfo extends GenericModel{
 	    return androidFileInfo;
 	}
 	
-	public static String findByIds(String ids) {
+	/**
+	 * 根据id返回图片地址及图片缩略图列表
+	 * @param ids
+	 * @return
+	 */
+	public static Map<String, String> findByIds(String ids) {
 	    List<AndroidFileInfo> androidFileInfoList = new ArrayList<AndroidFileInfo>();
 	    	if (ids != null && ids.length() > 0 ) {
 				if (ids.endsWith(",")) {
@@ -65,18 +73,31 @@ public class AndroidFileInfo extends GenericModel{
 				androidFileInfoList = AndroidFileInfo.find("id IN (" + ids + ")").fetch();
 			}
 	    	
-	    String fileNames = "";
+	    String orginFileNames = "";//原始图片地址
+	    String thumbFileNames = "";//缩略图地址
 	    if (androidFileInfoList != null && androidFileInfoList.size() > 0) {
 		for (AndroidFileInfo androidFileInfo : androidFileInfoList) {
 		    if (androidFileInfo != null) {
-			    fileNames += androidFileInfo.url;
-			    fileNames += ",";
+		    	orginFileNames += androidFileInfo.url;
+		    	orginFileNames += ",";
+		    	if (androidFileInfo.thumb_url == null || androidFileInfo.thumb_url.equals("null") || androidFileInfo.thumb_url.length() <= 1) {
+		    		thumbFileNames += androidFileInfo.url;
+				}else {
+					thumbFileNames += androidFileInfo.thumb_url;
+				}
+		    	thumbFileNames += ",";
 		    }
 		}
 	    }
-	    if (fileNames.endsWith(",")) {
-		fileNames = fileNames.substring(0, fileNames.length() - 1);
+	    if (orginFileNames.endsWith(",")) {
+	    	orginFileNames = orginFileNames.substring(0, orginFileNames.length() - 1);
 	    }
-	    return fileNames;
+	    if (thumbFileNames.endsWith(",")) {
+			thumbFileNames = thumbFileNames.substring(0, thumbFileNames.length() - 1);
+		}
+	    Map<String, String> fileNameMap = new HashMap<String, String>();
+	    fileNameMap.put("orginFileName", orginFileNames);
+	    fileNameMap.put("thumbFileName", thumbFileNames);
+	    return fileNameMap;
 	}
 }

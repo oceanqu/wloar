@@ -7,6 +7,7 @@ import java.util.ResourceBundle;
 import java.util.Set;
 
 import models.AndroidNoticeInfo;
+import models.AndroidUserInfo;
 import models.ResultInfo;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
@@ -60,17 +61,17 @@ public class PushDoc {
      * @param cdfApp
      * 极光推送配置信息
      */
-    public long pushDoc(AndroidNoticeInfo androidNoticeInfo) {
+    public long pushDoc(String title, Integer notice_type, String content, Integer id, String push_range) {
 
 	JPushClient jpushClient = new JPushClient(jg_mastersecret, jg_appkey);
 	long msg_id = 0;
 	// For push, all you need do is to build PushPayload object.
-	PushPayload payload = buildPushObject_android_and_ios(androidNoticeInfo);
+	PushPayload payload = buildPushObject_android_and_ios(title, notice_type, content, id, push_range);
 	try {
 	    PushResult result = jpushClient.sendPush(payload);
 	    logger.info("推送成功 msg_id : " + result.msg_id + " ; newsId : "
-			+ String.valueOf(androidNoticeInfo.id) + "; title : "
-			+ androidNoticeInfo.title);
+			+ String.valueOf(id) + "; title : "
+			+ title);
 	    System.out.println("Got result - " + result);
 	    msg_id = result.msg_id;
 
@@ -81,8 +82,8 @@ public class PushDoc {
 	    logger.error("推送失败  err_Code : " + e.getErrorCode()
 		    	+ "; HTTP Status: " + e.getStatus()
 		    	+ ";Error Message: " + e.getErrorMessage()
-			+ "; newsId : " + String.valueOf(androidNoticeInfo.id)
-			+ " ; title : " + androidNoticeInfo.title);
+			+ "; newsId : " + String.valueOf(id)
+			+ " ; title : " + title);
 	    return msg_id;
 	}
 	return msg_id;
@@ -96,39 +97,41 @@ public class PushDoc {
      * @return
      * 2014年12月26日
      */
-    public static PushPayload buildPushObject_android_and_ios(AndroidNoticeInfo androidNoticeInfo) {
+    public static PushPayload buildPushObject_android_and_ios(String title, Integer notice_type, String content, Integer id, String push_range) {
 
-	if (androidNoticeInfo.title.length() > 30) {
-	    androidNoticeInfo.title = androidNoticeInfo.title.substring(0, 30);
-	    androidNoticeInfo.title += "...";
+	if (title.length() > 30) {
+	    title = title.substring(0, 30);
+	    title += "...";
 	}
 	//android参数
-	String notice_type = "群发消息";
-	if (androidNoticeInfo.notice_type == 1) {
-	    notice_type = "下发任务";
+	String notice_type_string = "公告";
+	if (notice_type == 1) {
+		notice_type_string = "消息";
+	}else if (notice_type == 5) {
+		notice_type_string = "任务";
 	}
 	
 	String summary = "";
-	if (androidNoticeInfo.content.length() > 30) {
-	    summary= androidNoticeInfo.content.substring(0, 30);
+	if (content.length() > 30) {
+	    summary= content.substring(0, 30);
 	}else {
-	    summary = androidNoticeInfo.content;
+	    summary = content;
 	}
 	
 	AndroidNotification androidNotification = AndroidNotification.newBuilder()
-	.setTitle("[" + notice_type + "]" + androidNoticeInfo.title)
+	.setTitle("[" + notice_type_string + "]" + title)
 	.setAlert(summary)//必填,通知内容
-	.addExtra("doc_id", androidNoticeInfo.id)
-	.addExtra("from", androidNoticeInfo.notice_type)
+	.addExtra("doc_id", id)
+	.addExtra("from", notice_type)
 	.build();
 	
 	//ios参数
 	IosNotification iosNotification = IosNotification.newBuilder()
 	.setSound("default")//可选,通知提示声音
 	.setBadge(1)//可选,应用角标,如果不填，表示不改变角标数字；否则把角标数字改为指定的数字；为 0 表示清除。JPush 官方 API Library(SDK) 会默认填充badge值为"+1",详情参考：badge +1
-	.setAlert("[" + notice_type + "]" + androidNoticeInfo.title)//必填,通知内容
-	.addExtra("doc_id", androidNoticeInfo.id)
-	.addExtra("from", androidNoticeInfo.notice_type)
+	.setAlert("[" + notice_type_string + "]" + title)//必填,通知内容
+	.addExtra("doc_id", id)
+	.addExtra("from", notice_type)
 	.build();
 	
 	
@@ -142,7 +145,7 @@ public class PushDoc {
 	
 //	String tag_name = "tag_class_" + doc.class_id;
 	String tag_name = "";
-	if (androidNoticeInfo.push_range.equals("all")) {
+	if (push_range.equals("all")) {
 		return PushPayload
 			.newBuilder()
 			.setPlatform(Platform.android_ios())
@@ -157,7 +160,7 @@ public class PushDoc {
 			.build();
 	}else {
 	    try {
-        	    JSONObject jsonObject = JSONObject.fromObject(androidNoticeInfo.push_range);
+        	    JSONObject jsonObject = JSONObject.fromObject(push_range);
         	    JSONArray jsonArray_tag = jsonObject.getJSONArray("tag");
         	    for (int i = 0; i < jsonArray_tag.size(); i++) {
 //        		JSONObject json_tag = jsonArray_tag.getJSONObject(i);
@@ -195,7 +198,7 @@ public class PushDoc {
      * @return
      * 2015年6月4日
      */
-    public static ResultInfo updateJPushGroupTagOrAlias(String jpush_registration_id, Integer user_id, Request request) {
+    public static ResultInfo updateJPushGroupTagOrAlias(String jpush_registration_id, AndroidUserInfo androidUserInfo, Request request) {
 	ResultInfo info = new ResultInfo();
 	if (jpush_registration_id == null || jpush_registration_id.length() <= 0) {
 	    info.setCodeAndMsg(500);
@@ -203,8 +206,12 @@ public class PushDoc {
 	    return info;
 	}
 	String base_user_push_mark = "tag_user_";
-	String user_push_mark = base_user_push_mark + user_id;
+	String user_push_mark = base_user_push_mark + androidUserInfo.id;
 	Set<String> tagsToAdd = new HashSet<String>();// jpush新增tag信息
+	tagsToAdd.add(user_push_mark);
+	
+	base_user_push_mark = "tag_department_";
+	user_push_mark = base_user_push_mark + androidUserInfo.department_id;
 	tagsToAdd.add(user_push_mark);
 		    if (tagsToAdd.size() > 0) {
 			// 为当前设备在jpush服务器打标签

@@ -44,9 +44,11 @@ public class CodeMsgDesc {
 	public String Code_200 = "成功";
 	public String Code_500 = "程序异常，请联系管理员";
 	public String Code_400 = "未登录，请先登录";
+	public String Code_1021 = "输入参数错误,查询数据为空！";
 
 	public String Code_1001 = "科室成员不能下派任务，只能上报任务！";
 	public String Code_1002 = "用户名或密码错误，请重新输入！";
+	public String Code_1020 = "用户名异常，请使用手机号登录！";
 	public String Code_1003 = "局长没有上级用户！";
 	public String Code_1004 = "科室成员没有下级用户！";
 	public String Code_1005 = "上传文件为空，请重新上传！";
@@ -61,8 +63,10 @@ public class CodeMsgDesc {
 	public String Code_1014 = "该企业已存在，不能重新添加！";
 	public String Code_1015 = "科室人员只能查看本科室任务！";
 	public String Code_1017 = "输入参数错误，该企业数据不存在";
-	public String Code_1018 = "科室人员只能发布本科室消息公告！";
+	public String Code_1016 = "科员不能发布公告！";
+	public String Code_1018 = "科室领导只能发布本科室公告！";
 	public String Code_1019 = "当前版本已是最新版本！";
+	public String Code_1022 = "任务只能由科室领导公开！";
 
 
 	

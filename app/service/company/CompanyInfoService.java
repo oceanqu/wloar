@@ -6,7 +6,6 @@ import java.util.List;
 import models.AndroidCompanyInfo;
 import models.AndroidFileInfo;
 import models.AndroidTaskInfo;
-import models.AndroidTaskVerifyInfo;
 import models.AndroidUserInfo;
 import models.ResultInfo;
 import play.mvc.Http.Request;

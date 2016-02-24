@@ -6,10 +6,16 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.text.Format;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.ResourceBundle;
 
 import models.AndroidFileInfo;
 import models.AndroidTaskInfo;
@@ -23,6 +29,7 @@ import org.hibernate.mapping.Array;
 import play.mvc.Controller;
 import play.mvc.Http.Request;
 import service.task.TaskInfoService;
+import util.ImageUtil;
 
 public class FileUploadService {
 
@@ -67,6 +74,8 @@ public class FileUploadService {
 	    String content,Integer task_id, Integer task_file_type, Request request) {
 	// {"originalName":"demo.jpg","name":"demo.jpg","url":"upload\/demo.jpg","size":"99697","type":".jpg","state":"SUCCESS"}
 	ResultInfo info = new ResultInfo();
+	Integer width = Integer.valueOf(ResourceBundle.getBundle("config").getString("thumb.width"));
+	Integer height = Integer.valueOf(ResourceBundle.getBundle("config").getString("thumb.height"));
 	if (user_name == null || user_name.length() <= 0) {
 	    AndroidUserInfo androidUserInfo = AndroidUserInfo.find("id = ?",
 		    user_id).first();
@@ -88,17 +97,29 @@ public class FileUploadService {
 	} else {
 	    if (upfiles != null && upfiles.size() > 0) {
 		int i = 0;// 自增编号，用于生成文件名，防止批量提交时文件名冲突
+	    if (savePath.equals("") || savePath == null) {
+			savePath = "public/upload/";// 保存路径
+		}else {
+			Format format = new SimpleDateFormat("yyyyMMdd"); 
+			if (savePath.endsWith("/")) {
+				savePath += format.format(new Date()) + "/";
+			}else {
+				savePath += "/";
+				savePath += format.format(new Date()) + "/";
+			}
+			File createFileName = new File(savePath);
+			if (!createFileName.exists()&&!createFileName.isDirectory()) {
+				createFileName.mkdir();
+			}
+		}
+
 		for (File upfile : upfiles) {
 		    String fileName = upfile.getName();// 上传文件名
-
+		    String thumbFileName = "";//缩略图文件名
 		    String type = fileName.substring(fileName.lastIndexOf('.')); // 文件类型
 		    String originalName = fileName;// 原始文件名
 
 		    long size = 0;// 文件大小
-
-		    if (savePath.equals("") || savePath == null) {
-			savePath = "public/upload/";// 保存路径
-		    }
 
 		    String newFileName = String.valueOf(System
 			    .currentTimeMillis()) + i + type;
@@ -117,6 +138,11 @@ public class FileUploadService {
 			BufferedOutputStream output = new BufferedOutputStream(
 				out);
 			Streams.copy(in, output, true);
+			//生成缩略图
+			if (checkFileType(newFileName)) {//如果是图片，在生成缩略图
+				thumbFileName = ImageUtil.thumbnailImage(url, width, height);
+			}
+			
 			size = file.length();
 			// UE中只会处理单张上传，完成后即退出
 		    } catch (Exception e) {
@@ -131,6 +157,11 @@ public class FileUploadService {
 		    androidFileInfo.user_name = user_name;
 		    androidFileInfo.file_type = file_type;
 		    androidFileInfo.content = content;
+		    if (thumbFileName.equals("") || thumbFileName.length() <= 1) {//如果生成缩略图失败，则将url赋值给缩略图
+				androidFileInfo.thumb_url = url;
+			}else {
+				androidFileInfo.thumb_url = thumbFileName;
+			}
 		    androidFileInfo.save();
 		    fileIds += androidFileInfo.id;
 		    fileIds += ",";
@@ -220,5 +251,25 @@ public class FileUploadService {
 			flag = true;
 		}
 		return flag;
+	}
+
+    private static String[] allowFiles = { ".gif", ".png", ".jpg",
+		".jpeg", ".bmp" ,".BMP", ".JPG", ".wbmp", ".PNG", ".JPEG", ".WBMP", ".GIF"};
+
+	/**
+	 * 文件类型判断
+	 * 
+	 * @param fileName
+	 * @return
+	 */
+	private static boolean checkFileType(String fileName) {
+		Iterator<String> type = Arrays.asList(allowFiles).iterator();
+		while (type.hasNext()) {
+			String ext = type.next();
+			if (fileName.toLowerCase().endsWith(ext)) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

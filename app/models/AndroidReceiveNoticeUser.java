@@ -3,6 +3,7 @@ package models;
 import static javax.persistence.GenerationType.AUTO;
 
 import java.util.Date;
+import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -36,13 +37,39 @@ public class AndroidReceiveNoticeUser extends GenericModel{
 	public Date create_time = new Date();
 	public Integer department_id = 0 ;//所属部门，0：局长级别，不属于任何部门；1：质量；2：安全；3：执法
 	public String department_name ="";//	所属部门名称
+	public Integer if_read = 0;//是否已读；0：未读；1：已读
+	public Date read_time = new Date(); 
 	@Transient
 	public String create_time_string;// 下派任务接收人编号，以",分割"
 
 	public static AndroidReceiveNoticeUser findByNoticeAndUser(Integer notice_id, Integer receive_user_id) {
 	    return AndroidReceiveNoticeUser.find("notice_id = ? and receive_user_id = ?", notice_id,receive_user_id).first();
 	}
+
+	public static List<AndroidReceiveNoticeUser> findByNoticeTypeAndUser(Integer notice_type, 
+			Integer receive_user_id/*,Integer p, Integer ps,String keywords*/) {
+//		if (keywords != null && keywords.length() > 0) {
+//			return AndroidReceiveNoticeUser.find(" title LIKE \'%" + keywords + "%\' AND notice_type = ? and receive_user_id = ? group by notice_id " +
+//		    		"order by notice_id desc", notice_type,receive_user_id).fetch(p,ps);
+//		}else {
+			return AndroidReceiveNoticeUser.find("notice_type = ? and receive_user_id = ? group by notice_id " +
+		    		"order by notice_id desc", notice_type,receive_user_id).fetch();
+//		}
+	    
+	}
 	
+	public static List<AndroidReceiveNoticeUser> findByNoticeTypeAndUserAndIfRead(Integer notice_type, 
+			Integer receive_user_id,Integer if_read/*,Integer p, Integer ps,String keywords*/) {
+//		if (keywords != null && keywords.length() > 0) {
+//			return AndroidReceiveNoticeUser.find(" title LIKE \'%" + keywords + "%\' AND notice_type = ? and receive_user_id = ? and if_read = ? group by notice_id " +
+//		    		"order by notice_id desc", notice_type,receive_user_id,if_read).fetch(p,ps);
+//		}else {
+			return AndroidReceiveNoticeUser.find("notice_type = ? and receive_user_id = ? and if_read = ? group by notice_id " +
+		    		"order by notice_id desc", notice_type,receive_user_id,if_read).fetch();
+//		}
+	    
+	}
+
 	public static AndroidReceiveNoticeUser findByNoticeAndDepartment(Integer notice_id, Integer department_id) {
 	    return AndroidReceiveNoticeUser.find("notice_id = ? and department_id = ?", notice_id,department_id).first();
 	}

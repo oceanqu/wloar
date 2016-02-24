@@ -31,16 +31,17 @@ public class UserInfo extends Controller {
 	 * @param type 接口类型，与user_type配合使用，0：取user_type同级用户；1：取user_type上级用户；2：取user_type下一级用户
 	 */
 	public static void getUserList(Integer user_id, Integer department_id,Integer type) {
-		Logger.info("UserInfo.getUserList : " );
+		Logger.info("UserInfo.getUserList : user_id = " + user_id + ", "
+			+ "department_id = " + department_id + " , type = " + type );
 		if (user_id == null) {
 		    user_id = 0;
 		}
 		if (department_id == null) {//局长级别
 			department_id = 0;
 		}
-		if (type == null) {
-			type = 0;
-		}
+//		if (type == null) {
+//			type = 0;
+//		}
 		ResultInfo info = UserInfoService.getUserList(user_id,department_id,type,request);
 		renderJSON(info);
 	}
@@ -64,12 +65,16 @@ public class UserInfo extends Controller {
 	 * @param user_name
 	 * @param password
 	 * @param jpush_registration_id
+	 * @param mVersionCode
 	 */
 	public static void login(String user_name, String password,
-			String jpush_registration_id) {
+			String jpush_registration_id, Integer mVersionCode) {
+		if (mVersionCode == null) {
+			mVersionCode = 0;
+		}
 		Logger.info("UserInfo.login user_name = " + user_name);
 		ResultInfo info = UserInfoService.login(user_name, password,
-				jpush_registration_id, request);
+				jpush_registration_id,mVersionCode, request);
 		renderJSON(info);
 
 	}

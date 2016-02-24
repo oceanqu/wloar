@@ -21,13 +21,19 @@ GET     /api/user/get_user_list			  user.UserInfo.getUserList
 POST     /api/user/update_user_registration			   user.UserInfo.updateUserRegistrationId      
 POST     /api/user/login			   user.UserInfo.login      
 POST     /api/user/update_user_password			   user.UserInfo.updateUserPassword      
+#工程接口
+GET     /api/project/get_project_list			  project.ProjectManage.getProjectList      
+GET     /api/project/get_project_info			  project.ProjectManage.getProjectInfo      
 
 POST     /api/task/add_task_info			  task.TaskInfo.addTaskInfo      
 GET     /api/task/get_task_list			  task.TaskInfo.getUserTaskList      
 GET     /api/task/get_task_info			  task.TaskInfo.getUserTaskInfo        
 POST     /api/task/edit_task_info			  task.TaskInfo.editUserTaskInfo        
+POST     /api/task/set_task_open			  task.TaskInfo.setTaskOpen        
 POST     /api/task/delete_task_info			  task.TaskInfo.deleteUserTaskInfo        
 POST     /api/task/verify_task_info			  task.TaskInfo.verifyUserTaskInfo        
+#部门列表
+GET     /api/department/get_department_list			  department.DepartmentManage.getDepartmentList      
 
 POST     /api/company/add_company_info			  company.CompanyInfo.addCompanyInfo      
 GET     /api/company/get_company_list			  company.CompanyInfo.getCompanyList      
@@ -40,6 +46,7 @@ GET     /api/notice/get_notice_list			  notice.CustomDocinfo.getNoticeList
 GET     /api/notice/get_notice_info			  notice.CustomDocinfo.getNoticeInfo      
 POST     /api/notice/edit_notice_info			  notice.CustomDocinfo.editNoticeInfo          
 POST     /api/notice/delete_notice_info			  notice.CustomDocinfo.deleteNoticeInfo          
+GET     /api/notice/get_unread_notice_count			  notice.CustomDocinfo.getUnReadNoticeCount       
 
 GET     /api/version/get_version_info			  version.VersionInfo.getVersion      
 

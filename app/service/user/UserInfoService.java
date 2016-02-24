@@ -18,6 +18,7 @@ import cn.jpush.api.common.resp.APIRequestException;
 import cn.jpush.api.device.DeviceClient;
 import cn.jpush.api.device.TagAliasResult;
 import models.AndroidNoticeInfo;
+import models.AndroidUserGroup;
 import models.AndroidUserInfo;
 import models.ResultInfo;
 import models.ResultObject;
@@ -27,6 +28,7 @@ import play.mvc.Http.Request;
 import play.mvc.Scope.Session;
 import service.notice.CustomDocinfoService;
 import util.PushDoc;
+import util.UtilValidate;
 
 
 
@@ -46,13 +48,15 @@ public class UserInfoService{
      */
     public static ResultInfo getUserList(Integer user_id, Integer department_id,Integer type,Request request) {
 	ResultInfo info = new ResultInfo();
-
-
 	
-	List<AndroidUserInfo> androidUserInfoList = null;
+	List<AndroidUserInfo> androidUserInfoList = new ArrayList<AndroidUserInfo>();
 	
 	if (user_id == 0) {
-	    androidUserInfoList = AndroidUserInfo.findAll();
+	    if (department_id <= 0) {
+		    androidUserInfoList = AndroidUserInfo.findAll();
+		}else {
+			androidUserInfoList = AndroidUserInfo.findUserInfoByDepartment(department_id);
+		}
 	}else {
 		AndroidUserInfo androidUserInfo = AndroidUserInfo.findById(user_id);
 		if (androidUserInfo == null ) {
@@ -61,38 +65,64 @@ public class UserInfoService{
 		    return info;
 
 		}
-		Integer user_type = androidUserInfo.user_type;
+		
+		if (type == null) {//如果未传入type，则返回全部，但是将本人所在部门联系人优先显示
+		    department_id = androidUserInfo.department_id;
+		    List<AndroidUserInfo> tmpAndroidUserInfoList = null; 
+		    //首先取出本部门的所有user_id
+		    tmpAndroidUserInfoList = AndroidUserInfo.findUserInfoByDepartmentId(department_id);
+		    if (tmpAndroidUserInfoList != null && tmpAndroidUserInfoList.size() > 0) {
+			androidUserInfoList.addAll(tmpAndroidUserInfoList);
+		    }
+		    
+		    if (androidUserInfo.user_type > 2) {//如果不是局领导
+			    //如果department_id不是局长，则再优先取出局长
+			    tmpAndroidUserInfoList = AndroidUserInfo.findUserInfoByUserTypes("1,2");
+			    if (tmpAndroidUserInfoList != null && tmpAndroidUserInfoList.size() > 0) {
+				androidUserInfoList.addAll(tmpAndroidUserInfoList);
+			    }
+			    
+		    }
+		    //取出其他部门人员
+		    tmpAndroidUserInfoList = AndroidUserInfo.findUserInfoNotDepartmentAndUserTypes(department_id,"1,2");
+		    if (tmpAndroidUserInfoList != null && tmpAndroidUserInfoList.size() > 0) {
+			androidUserInfoList.addAll(tmpAndroidUserInfoList);
+		    }
 
-		if (type == 0) {//取同级数据
-			if (user_type == 0) {//取全部数据
-				androidUserInfoList = AndroidUserInfo.findAll();
-			}else if (user_type == 1 || user_type == 2) {//局长或副局
-				androidUserInfoList = AndroidUserInfo.find("user_type = ? ", user_type).fetch();
-			}else {//科主任或科室成员，只能看到本科室的人
-				androidUserInfoList = AndroidUserInfo.find("user_type = ? and department_id = ? ", user_type,department_id).fetch();
-			}
-		}else if(type == 1){//取user_type上级用户
-			if (user_type == 1 || user_type == 0) {//局长级没有上级用户
-				info.setCodeAndMsg(1003);
-				info.setRequest(request.path);
-				return info;
-			}else if (user_type == 2 || user_type == 3) {//副局/科主任，返回局级/副局级数据
-				androidUserInfoList = AndroidUserInfo.find("user_type = ? ", user_type - 1).fetch();
-			}else {//科室成员，只能看到本科室的科主任
-				androidUserInfoList = AndroidUserInfo.find("user_type = ? and department_id = ? ", user_type - 1,department_id).fetch();
-			}
-		}else if (type == 2) {//取user_type下一级用户
-			if (user_type == 1 || user_type == 0 || user_type == 2) {//局长/副局的下一级为副局/科主任
-				androidUserInfoList = AndroidUserInfo.find("user_type = ? ", user_type + 1).fetch();
-			}else if (user_type == 3) {//科主任下一级为本部门科室成员
-				androidUserInfoList = AndroidUserInfo.find("user_type = ? and department_id = ? ", user_type + 1,department_id).fetch();
-			}else {//科室成员没有下一级用户
-				info.setCodeAndMsg(1004);
-				info.setRequest(request.path);
-				return info;
-			}
+		}else {
+			Integer user_type = androidUserInfo.user_type;
+			if (type == 0) {//取同级数据
+				if (user_type == 0) {//取全部数据
+					androidUserInfoList = AndroidUserInfo.findAll();
+				}else if (user_type == 1 || user_type == 2) {//局长或副局
+					androidUserInfoList = AndroidUserInfo.find("user_type = ? ", user_type).fetch();
+				}else {//科主任或科室成员，只能看到本科室的人
+					androidUserInfoList = AndroidUserInfo.find("user_type = ? and department_id = ? ", user_type,department_id).fetch();
+				}
+			}else if(type == 1){//取user_type上级用户
+				if (user_type == 1 || user_type == 0) {//局长级没有上级用户
+					info.setCodeAndMsg(1003);
+					info.setRequest(request.path);
+					return info;
+				}else if (user_type == 2 || user_type == 3) {//副局/科主任，返回局级/副局级数据
+					androidUserInfoList = AndroidUserInfo.find("user_type = ? ", user_type - 1).fetch();
+				}else {//科室成员，只能看到本科室的科主任
+					androidUserInfoList = AndroidUserInfo.find("user_type = ? and department_id = ? ", user_type - 1,department_id).fetch();
+				}
+			}else if (type == 2) {//取user_type下一级用户
+				if (user_type == 1 || user_type == 0 || user_type == 2) {//局长/副局的下一级为副局/科主任
+					androidUserInfoList = AndroidUserInfo.find("user_type = ? ", user_type + 1).fetch();
+				}else if (user_type == 3) {//科主任下一级为本部门科室成员
+					androidUserInfoList = AndroidUserInfo.find("user_type = ? and department_id = ? ", user_type + 1,department_id).fetch();
+				}else {//科室成员没有下一级用户
+					info.setCodeAndMsg(1004);
+					info.setRequest(request.path);
+					return info;
+				}
 
+			}
 		}
+
 	}
 	
 
@@ -101,9 +131,14 @@ public class UserInfoService{
 	if (androidUserInfoList != null && androidUserInfoList.size() > 0) {
 		for (AndroidUserInfo androidUserInfo1 : androidUserInfoList) {
 			if (androidUserInfo1 != null) {
+			    if (androidUserInfo1.id == user_id) {//接收人列表中去掉本人
+				continue;
+			    }
 				ResultObject resultObject = new ResultObject();
 				resultObject.id = androidUserInfo1.id;
 				resultObject.name = androidUserInfo1.name;
+				resultObject.department_id = androidUserInfo1.department_id;
+				resultObject.department_name = androidUserInfo1.department_name;
 				resultObjectList.add(resultObject);
 			}
 		}
@@ -136,7 +171,7 @@ public class UserInfoService{
 	    androidUserInfo.jpush_registration_id = jpush_registration_id;
 	}
 	androidUserInfo.save();
-	info = PushDoc.updateJPushGroupTagOrAlias(jpush_registration_id, user_id, request);
+	info = PushDoc.updateJPushGroupTagOrAlias(jpush_registration_id, androidUserInfo, request);
 	if (info.getCode() == 200) {
 		info.setCodeAndMsg(200);
 		info.setInfo(androidUserInfo);
@@ -184,17 +219,54 @@ public class UserInfoService{
      * @param request
      * @return
      */
-    public static ResultInfo login(String user_name, String password,String jpush_registration_id,Request request) {
+    public static ResultInfo login(String user_name, String password,String jpush_registration_id,
+    		Integer mVersionCode, Request request) {
 	ResultInfo info = new ResultInfo();
-	AndroidUserInfo androidUserInfo = AndroidUserInfo.find("name = ? and password = ?", user_name,password).first();
-	if (androidUserInfo == null) {
+	List<AndroidUserInfo> androidUserInfoList = null;
+	if (UtilValidate.isMobileNO(user_name)) {// 手机号登录，直接登录
+		if (mVersionCode > 3) {//升级加密以后的版本
+			androidUserInfoList = AndroidUserInfo.find("phone = ? and password = ?", user_name,password).fetch();
+			if (androidUserInfoList != null && androidUserInfoList.size() == 1) {//如果只有一个
+				if (!androidUserInfoList.get(0).version_code.equals(mVersionCode)) {
+					updateUserVersionCode(androidUserInfoList.get(0).id, mVersionCode);
+				}
+			}
+		}else {//升级加密之前的版本，密码使用明文
+			androidUserInfoList = AndroidUserInfo.find("phone = ? and pwd = ?", user_name,password).fetch();
+		}
+	    
+	}else {
+		if (mVersionCode > 3) {//升级加密以后的版本
+			androidUserInfoList = AndroidUserInfo.find("name = ? and password = ?", user_name,password).fetch();
+			if (androidUserInfoList != null && androidUserInfoList.size() == 1) {//如果只有一个
+				if (!androidUserInfoList.get(0).version_code.equals(mVersionCode)) {
+					updateUserVersionCode(androidUserInfoList.get(0).id, mVersionCode);
+				}
+			}
+		}else {//升级加密之前的版本，密码使用明文
+			androidUserInfoList = AndroidUserInfo.find("name = ? and pwd = ?", user_name,password).fetch();
+		}
+	}
+	 
+	if (androidUserInfoList == null || androidUserInfoList.size() <= 0) {
 		info.setCodeAndMsg(1002);
 		info.setRequest(request.path);
 		return info;
-
+	}else if (androidUserInfoList.size() >= 2) {//如果有重名的用户，提示手机号登录
+		info.setCodeAndMsg(1020);
+		info.setRequest(request.path);
+		return info;
 	}else {
 	    if (jpush_registration_id != null && jpush_registration_id.length() > 0) {
-		info = PushDoc.updateJPushGroupTagOrAlias(jpush_registration_id, androidUserInfo.id, request);
+		for (AndroidUserInfo androidUserInfo : androidUserInfoList) {
+		    if (androidUserInfo != null) {
+			//判断是否有查看和发布任务的权限
+			androidUserInfo.if_task_power = getTaskPower(androidUserInfo);
+			info = PushDoc.updateJPushGroupTagOrAlias(jpush_registration_id, androidUserInfo, request);
+			break;
+		    }
+		}
+		
 	    }
 	}
 //	ResultObject resultObject = new ResultObject();
@@ -202,12 +274,27 @@ public class UserInfoService{
 //	resultObject.name = androidUserInfo.user_name;
 	
 	info.setCodeAndMsg(200);
-	info.setInfo(androidUserInfo);
+	info.setInfo(androidUserInfoList.get(0));
 	info.setRequest(request.path);
 	return info;
 
     }
-    
+   
+    //查看用户是否有发布和查看任务的权限
+    private static Integer getTaskPower(AndroidUserInfo androidUserInfo) {
+  	//首先判断是不是局领导，如果是，可以发布和查看
+	if (androidUserInfo.user_type <= 2) {//局长或副局
+	    return 1;
+	}
+	//从配置文件取有任务权限分组id
+	String group_ids = ResourceBundle.getBundle("config").getString("task_power_group_id");
+	List<AndroidUserGroup> androidUserGroupList = AndroidUserGroup.findGroupInfoByGroupUserAndGroupType(group_ids, 2,androidUserInfo.department_id);
+	if (androidUserGroupList != null && androidUserGroupList.size() > 0) {
+	    return 1;
+	}
+	
+      return 0;
+    }
     
   //将用户登录信息写入到session
 	private static void resetAndGetSessionUser(AndroidUserInfo androidUserInfo) {
@@ -231,5 +318,14 @@ public class UserInfoService{
 			}
 		}
 		return androidUserInfo;
+	}
+	
+	//获取当前登录用户信息
+	public static void updateUserVersionCode(Integer user_id, Integer version_code) {
+		AndroidUserInfo androidUserInfo = AndroidUserInfo.find("id = ?", user_id).first();
+		if (androidUserInfo != null) {
+			androidUserInfo.version_code = version_code;
+			androidUserInfo.save();
+		}
 	}
 }

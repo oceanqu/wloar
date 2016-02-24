@@ -2,6 +2,8 @@ package util;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import models.ResultInfo;
 import play.mvc.Http.Request;
@@ -183,5 +185,23 @@ public class UtilValidate {
 	public static ResultInfo validateSiteUrl(String url,Request request){
 		return validateBoardUrl(url, request);
 	}
+	
+	    /**
+	     * 判断手机号是否合法
+	     * 
+	     * @param mobiles
+	     * @return
+	     */
+	    public static boolean isMobileNO(String mobiles) {
+		if (null == mobiles || "".equals(mobiles))
+		    return false;
+		// Pattern p = Pattern.compile("\\w+@(\\w+.)+[a-z]{2,3}"); //简单匹配
+//		Pattern p = Pattern
+//			.compile("^((13[0-9])|(15[^4,\\D])|(18[0,5-9]))\\d{8}$");
+		Pattern p = Pattern
+			.compile("^((13[0-9])|(14[5,7])|(15[^4,\\D])|(17[0,6-8])|(18[0-9]))\\d{8}$");
+		Matcher m = p.matcher(mobiles);
+		return m.matches();
+	    }
 	
 }

@@ -7,4 +7,6 @@ package models;
 public class ResultObject {
 	public Integer id;
 	public String name;
+	public Integer department_id;
+	public String department_name;
 }

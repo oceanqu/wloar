@@ -14,7 +14,7 @@ import javax.persistence.Transient;
 import play.db.jpa.GenericModel;
 /**
  * 媒体热点推送文章信息表
- * @author zx
+ * @author 
  * @date 2014-11-18
  */
 @Entity
@@ -41,8 +41,15 @@ public class AndroidNoticeInfo extends GenericModel{
 	@Transient
 	public String create_time_string;// 
 	@Transient
-	public String receive_user_ids;//接收人编号列表
-
+	public String receive_user_ids;//已读人编号列表
+	@Transient
+	public String receive_user_names;//已读人姓名列表
+	@Transient
+	public String unreceive_user_names;//未读人姓名列表
+	@Transient
+	public String unreceive_user_ids;//未读人编号列表
+	@Transient 
+	public Integer if_read = 1;//是否已读；0：未读；1：已读
 
 
 }
